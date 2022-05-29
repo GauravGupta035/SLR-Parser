@@ -43,8 +43,8 @@ class StartPage(tk.Frame):
         Base.values['inp'] = inp
         # print(inp)
         # os.system('cmd /k slr -g grammar.txt "' + inp + '"')
-        # slr.main(grammar_file='grammar.txt',
-        #          automaton=False, tokens=inp)
+        slr.main(grammar_file='grammar.txt',
+                 automaton=False, tokens=inp)
         self.controller.show_frame('PageOne')
 
     def __init__(self, parent, controller):

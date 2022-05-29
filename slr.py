@@ -1,10 +1,11 @@
 # from graphviz import Digraph
+import os
 from grammar import Grammar
 # import argparse
-from tkinter import *
 import threading
+import tkinter as tk
 
-# from graphviz import Digraph
+from graphviz import Digraph
 
 
 def first_follow(G):
@@ -51,7 +52,8 @@ def first_follow(G):
 
 
 class SLRParser:
-    def __init__(self, G):
+    def __init__(self, G, context):
+        self.context = context
         self.G_prime = Grammar(f"{G.start}' -> {G.start}\n{G.grammar_str}")
         self.max_G_prime_len = len(max(self.G_prime.grammar, key=len))
         self.G_indexed = []
@@ -67,35 +69,35 @@ class SLRParser:
         self.parse_table_symbols = self.action + self.goto
         self.parse_table = self.construct_table()
 
-    def gui_print(self, info):
-        win = Tk()
-        win.title('SLR Parser Output')
-        new = Toplevel(win)
-        new.geometry('500x500')
+    # def gui_print(self, info):
+    #     win = Tk()
+    #     win.title('SLR Parser Output')
+    #     new = Toplevel(win)
+    #     new.geometry('500x500')
 
-        label = Label(new, text=info)
-        label.pack()
+    #     label = Label(new, text=info)
+    #     label.pack()
 
-    def mainframe(self, root):
-        self.query = StringVar()
-        Label(self, text='Enter string: ').grid(row=0)
-        self.e1 = Entry(root, textvariable=self.query)
-        self.e1.insert(0, 'id + id * id')  # TODO: Remove later
-        self.e1.grid(row=0, column=1)
+    # def mainframe(self, root):
+    #     self.query = StringVar()
+    #     Label(self, text='Enter string: ').grid(row=0)
+    #     self.e1 = Entry(root, textvariable=self.query)
+    #     self.e1.insert(0, 'id + id * id')  # TODO: Remove later
+    #     self.e1.grid(row=0, column=1)
 
-        button = Button(root, text="Submit", width=15,
-                        command=self.output)
-        button.grid(row=1, column=1)
+    #     button = Button(root, text="Submit", width=15,
+    #                     command=self.output)
+    #     button.grid(row=1, column=1)
 
-    def output(self):
-        newwin = Toplevel(root)
-        newwin.title('SLR result')
-        newwin.geometry('500x500')
-        inp = self.query.get()
-        threading.Thread(target=lambda: main(
-            'grammar.txt', automaton=False, tokens=inp)).start
+    # def output(self):
+    #     newwin = Toplevel(root)
+    #     newwin.title('SLR result')
+    #     newwin.geometry('500x500')
+    #     inp = self.query.get()
+    #     threading.Thread(target=lambda: main(
+    #         'grammar.txt', automaton=False, tokens=inp)).start
 
-        Label(self, inp).pack()
+    #     Label(self, inp).pack()
 
     def CLOSURE(self, I):
         J = I
@@ -255,49 +257,49 @@ class SLRParser:
         print_line()
         print()
 
-    # def generate_automaton(self):
-    #     automaton = Digraph('automaton', node_attr={'shape': 'record'})
+    def generate_automaton(self):
+        automaton = Digraph('automaton', node_attr={'shape': 'record'})
 
-    #     for i, I in enumerate(self.C):
-    #         I_html = f'<<I>I</I><SUB>{i}</SUB><BR/>'
+        for i, I in enumerate(self.C):
+            I_html = f'<<I>I</I><SUB>{i}</SUB><BR/>'
 
-    #         for head, bodies in I.items():
-    #             for body in bodies:
-    #                 I_html += f'<I>{head:>{self.max_G_prime_len}}</I> &#8594;'
+            for head, bodies in I.items():
+                for body in bodies:
+                    I_html += f'<I>{head:>{self.max_G_prime_len}}</I> &#8594;'
 
-    #                 for symbol in body:
-    #                     if symbol in self.G_prime.nonterminals:
-    #                         I_html += f' <I>{symbol}</I>'
-    #                     elif symbol in self.G_prime.terminals:
-    #                         I_html += f' <B>{symbol}</B>'
-    #                     else:
-    #                         I_html += f' {symbol}'
+                    for symbol in body:
+                        if symbol in self.G_prime.nonterminals:
+                            I_html += f' <I>{symbol}</I>'
+                        elif symbol in self.G_prime.terminals:
+                            I_html += f' <B>{symbol}</B>'
+                        else:
+                            I_html += f' {symbol}'
 
-    #                 I_html += '<BR ALIGN="LEFT"/>'
+                    I_html += '<BR ALIGN="LEFT"/>'
 
-    #         automaton.node(f'I{i}', f'{I_html}>')
+            automaton.node(f'I{i}', f'{I_html}>')
 
-    #     for r in range(len(self.C)):
-    #         for c in self.parse_table_symbols:
-    #             if isinstance(self.parse_table[r][c], int):
-    #                 automaton.edge(
-    #                     f'I{r}', f'I{self.parse_table[r][c]}', label=f'<<I>{c}</I>>')
+        for r in range(len(self.C)):
+            for c in self.parse_table_symbols:
+                if isinstance(self.parse_table[r][c], int):
+                    automaton.edge(
+                        f'I{r}', f'I{self.parse_table[r][c]}', label=f'<<I>{c}</I>>')
 
-    #             elif 's' in self.parse_table[r][c]:
-    #                 i = self.parse_table[r][c][self.parse_table[r][c].index(
-    #                     's') + 1:]
+                elif 's' in self.parse_table[r][c]:
+                    i = self.parse_table[r][c][self.parse_table[r][c].index(
+                        's') + 1:]
 
-    #                 if '/' in i:
-    #                     i = i[:i.index('/')]
+                    if '/' in i:
+                        i = i[:i.index('/')]
 
-    #                 automaton.edge(
-    #                     f'I{r}', f'I{i}', label=f'<<B>{c}</B>>' if c in self.G_prime.terminals else c)
+                    automaton.edge(
+                        f'I{r}', f'I{i}', label=f'<<B>{c}</B>>' if c in self.G_prime.terminals else c)
 
-    #             elif self.parse_table[r][c] == 'acc':
-    #                 automaton.node('acc', '<<B>accept</B>>', shape='none')
-    #                 automaton.edge(f'I{r}', 'acc', label='$')
+                elif self.parse_table[r][c] == 'acc':
+                    automaton.node('acc', '<<B>accept</B>>', shape='none')
+                    automaton.edge(f'I{r}', 'acc', label='$')
 
-    #     automaton.view()
+        automaton.view()
 
     def LR_parser(self, w):
         buffer = f'{w} $'.split()
@@ -366,8 +368,8 @@ class SLRParser:
 
     def print_LR_parser(self, results):
         def print_line():
-            print(
-                f'{"".join(["+" + ("-" * (max_len + 2)) for max_len in max_lens.values()])}+')
+            print(f'{"".join(["+" + ("-" * (max_len + 2)) for max_len in max_lens.values()])}+')
+            self.printInWindow(f'{"".join(["+" + ("-" * (max_len + 2)) for max_len in max_lens.values()])}+')
 
         max_lens = {key: max(len(value)
                              for value in results[key]) for key in results}
@@ -375,17 +377,21 @@ class SLRParser:
                  'symbols': '', 'input': '>', 'action': ''}
 
         print_line()
-        print(''.join(
-            [f'| {history[0]:^{max_len}} ' for history, max_len in zip(results.values(), max_lens.values())]) + '|')
+        print(''.join([f'| {history[0]:^{max_len}} ' for history, max_len in zip(results.values(), max_lens.values())]) + '|')
+        self.printInWindow(''.join([f'| {history[0]:^{max_len}} ' for history, max_len in zip(results.values(), max_lens.values())]) + '|')
         print_line()
         for i, step in enumerate(results['step'][:-1], 1):
-            print(''.join([f'| {history[i]:{just}{max_len}} ' for history, just, max_len in
-                           zip(results.values(), justs.values(), max_lens.values())]) + '|')
+            print(''.join([f'| {history[i]:{just}{max_len}} ' for history, just, max_len in zip(results.values(), justs.values(), max_lens.values())]) + '|')
+            self.printInWindow(''.join([f'| {history[i]:{just}{max_len}} ' for history, just, max_len in zip(results.values(), justs.values(), max_lens.values())]) + '|')
 
         print_line()
+    
+    def printInWindow(self, string):
+        tk.Label(self.context, text=string).pack() #getting parameter via query var
 
 
-def main(grammar_file, automaton, tokens):
+
+def main(grammar_file, automaton, tokens, context):
     # parser = argparse.ArgumentParser()
     # parser.add_argument('grammar_file', type=argparse.FileType(
     #     'r'), help='text file to be used as grammar')
@@ -393,20 +399,15 @@ def main(grammar_file, automaton, tokens):
     # parser.add_argument(
     #     'tokens', help='tokens to be parsed - all tokens are separated with spaces')
     # args = parser.parse_args()
-
+    # tk.Label(context, text="Hello, " + tokens).pack() #getting parameter via query var
     G = Grammar(open(grammar_file, 'r').read())
-    slr_parser = SLRParser(G)
+    slr_parser = SLRParser(G, context)
     slr_parser.print_info()
-    slr_parser.gui_print('Hello')
+    # slr_parser.gui_print('Hello')
     results = slr_parser.LR_parser(tokens)
     slr_parser.print_LR_parser(results)
 
-    # if automaton:
-    #     slr_parser.generate_automaton()
 
-
-if __name__ == '__main__':
-    root = Tk()
-    app = SLRParser()
-    app.mainFrame(root)
-    root.mainloop()
+    if automaton:
+        slr_parser.generate_automaton()
+    # os.system("notepad.exe output.txt")
